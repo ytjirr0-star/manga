@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manga - Baca Komik Online</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            glow: '#ff6600'
+                        },
+                        darkbg: '#0b0f19',
+                        darkcard: '#161e2e',
+                        darkborder: '#2a3447'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        comic: ['Bangers', 'cursive', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Font Awesome Icons & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f97316;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ea580c;
+        }
+
+        /* Glassmorphism */
+        .glass-nav {
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Comic Card Hover FX */
+        .comic-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .comic-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px -5px rgba(249, 115, 22, 0.3);
+        }
+
+        /* Speech bubble style for simulated webtoon panels */
+        .speech-bubble {
+            position: relative;
+            background: #ffffff;
+            border-radius: .4em;
+            color: #000;
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            width: 0;
+            height: 0;
+            border: 12px solid transparent;
+            border-top-color: #ffffff;
+            border-bottom: 0;
+            margin-left: -12px;
+            margin-bottom: -12px;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-darkbg text-slate-100 font-sans min-h-screen flex flex-col selection:bg-brand-500 selection:text-white antialiased">
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-50 glass-nav border-b border-darkborder/60">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            
+            <!-- Logo -->
+            <a href="javascript:void(0)" onclick="navigateTo('home')" class="flex items-center gap-3 group">
+                <div class="w-11 h-11 bg-gradient-to-tr from-brand-600 to-amber-400 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-brand-500/30 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-book-open-reader"></i>
+                </div>
+                <div>
+                    <span class="text-2xl font-black tracking-wider uppercase font-comic text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-orange-400 to-amber-300">
+                        Manga<span class="text-white">Orange</span>
+                    </span>
+                    <span class="block text-[10px] tracking-widest text-brand-500 font-semibold -mt-1 uppercase">Portal Komik SMK TKJ</span>
+                </div>
+            </a>
+
+            <!-- Search Bar (Desktop) -->
+            <div class="hidden md:flex flex-1 max-w-md relative">
+                <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Cari judul komik" 
+                    class="w-full bg-darkcard text-sm text-slate-200 placeholder-slate-400 rounded-full pl-11 pr-10 py-2.5 border border-darkborder focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="hidden lg:flex items-center gap-1">
+                <button onclick="filterNav('semua')" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-brand-500 bg-brand-500/10 hover:bg-brand-500/20">
+                    <i class="fa-solid fa-house mr-1.5"></i>Beranda
+                </button>
+                <button onclick="filterNav('pustaka')" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-brand-500 hover:bg-darkcard">
+                    <i class="fa-solid fa-[#f97316] fa-bookmark mr-1.5"></i>Pustaka Saya
+                </button>
+                <button onclick="filterNav('populer')" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-brand-500 hover:bg-darkcard">
+                    <i class="fa-solid fa-fire mr-1.5 text-amber-500"></i>Komik Populer
+                </button>
+                <button onclick="filterNav('tamat')" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-brand-500 hover:bg-darkcard">
+                    <i class="fa-solid fa-circle-check mr-1.5 text-emerald-500"></i>Komik Tamat
+                </button>
+            </nav>
+
+            <!-- Mobile Search Icon Trigger & Menu Button -->
+            <div class="flex md:hidden items-center gap-2">
+                <button onclick="toggleMobileSearch()" class="p-2.5 rounded-lg text-slate-300 bg-darkcard border border-darkborder hover:text-brand-500">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                <button onclick="toggleMobileMenu()" class="p-2.5 rounded-lg text-slate-300 bg-darkcard border border-darkborder hover:text-brand-500">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Search Input Bar Overlay -->
+        <div id="mobileSearchBar" class="hidden md:hidden px-4 pb-4 border-b border-darkborder bg-darkbg">
+            <div class="relative">
+                <input type="text" id="mobileSearchInput" oninput="handleSearch(this.value)" placeholder="Cari komik..." 
+                    class="w-full bg-darkcard text-sm text-slate-200 placeholder-slate-400 rounded-lg pl-10 pr-10 py-2 border border-darkborder focus:border-brand-500 focus:outline-none">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Nav Dropdown -->
+        <div id="mobileMenu" class="hidden lg:hidden border-b border-darkborder bg-darkcard/95 px-4 py-3 space-y-2">
+            <button onclick="filterNav('semua'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:bg-brand-500/20 hover:text-brand-500">
+                <i class="fa-solid fa-house w-6"></i> Beranda
+            </button>
+            <button onclick="filterNav('pustaka'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:bg-brand-500/20 hover:text-brand-500">
+                <i class="fa-solid fa-bookmark w-6 text-brand-500"></i> Pustaka Saya
+            </button>
+            <button onclick="filterNav('populer'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:bg-brand-500/20 hover:text-brand-500">
+                <i class="fa-solid fa-fire w-6 text-amber-500"></i> Komik Populer
+            </button>
+            <button onclick="filterNav('tamat'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:bg-brand-500/20 hover:text-brand-500">
+                <i class="fa-solid fa-circle-check w-6 text-emerald-500"></i> Komik Tamat
+            </button>
+        </div>
+    </header>
+
+    <!-- Genre Filter Bar Section -->
+    <section id="genreBarSection" class="bg-darkcard/50 border-b border-darkborder py-3">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar py-1" id="genreContainer">
+                <!-- Dynamic Genre Pills rendered via JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Dynamic View Container -->
+    <main id="appContent" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Dynamic Content (Home, Detail, Reader, or Pustaka) injected here -->
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="bg-darkcard border-t border-darkborder py-8 mt-12 text-slate-400 text-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-brand-500/20 rounded-lg flex items-center justify-center text-brand-500">
+                        <i class="fa-solid fa-laptop-code text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-200">MangaOrange - Website Komik Interaktif</div>
+                        <div class="text-xs text-slate-400">Proyek Pembelajaran Siswa SMK Jurusan TKJ (Teknik Komputer & Jaringan)</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6 text-slate-400 text-xs">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-brand-500"></i> Fast Dynamic SPA</span>
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-mobile-screen text-emerald-400"></i> Responsive UI</span>
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-database text-amber-400"></i> LocalStorage Saved</span>
+                </div>
+            </div>
+            <div class="mt-6 pt-6 border-t border-darkborder/50 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p>&copy; 2026 MangaOrange. Seluruh hak cipta dilindungi undang-undang.</p>
+                <p class="text-brand-500/90 font-medium"><i class="fa-solid fa-heart mr-1"></i> Dibuat dengan semangat belajar Teknik Komputer & Jaringan</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-800 border-l-4 border-brand-500 text-white px-5 py-3.5 rounded-r-lg shadow-2xl flex items-center gap-3">
+            <i id="toastIcon" class="fa-solid fa-circle-check text-brand-500 text-lg"></i>
+            <span id="toastMsg" class="text-sm font-medium">Pesan notifikasi</span>
+        </div>
+    </div>
+
+    <script>
+        /* Mock Database Komik Popular */
+        const MOCK_COMICS = [
+            {
+                id: 'one-piece',
+                title: 'One Piece',
+                nativeTitle: 'ワンピース',
+                cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGL0SkaFj8lnUglPIVyD-Azg7XUGr1Dlpig1I-xAV5Sw&s=10',
+                banner: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGL0SkaFj8lnUglPIVyD-Azg7XUGr1Dlpig1I-xAV5Sw&s=10',
+                status: 'Ongoing',
+                rating: 4.9,
+                author: 'Eiichiro Oda',
+                illustrator: 'Eiichiro Oda',
+                publisher: 'Shueisha (Weekly Shōnen Jump)',
+                lastUpdate: '2 Jam yang lalu',
+                viewCount: '2.8M',
+                genres: ['Aksi', 'Petualangan', 'Komedi', 'Fantasi'],
+                synopsis: 'Monkey D. Luffy menolak definisi bajak laut klasik. Luffy berlayar mencari harta karun legendaris "One Piece" untuk menjadi Raja Bajak Laut bersama kru Topi Jerami melintasi lautan Grand Line yang penuh keajaiban dan bahaya.',
+                chapters: [
+                    { id: 1092, title: 'Chapter 1092: Insiden Kuma di Tanah Suci', date: '21 Sep 2026' },
+                    { id: 1091, title: 'Chapter 1091: Sentomaru vs Kizaru', date: '14 Sep 2026' },
+                    { id: 1090, title: 'Chapter 1090: Kru Topi Jerami di Pulau Egghead', date: '07 Sep 2026' },
+                    { id: 1089, title: 'Chapter 1089: Pengepungan Pulau Masa Depan', date: '30 Agu 2026' },
+                    { id: 1, title: 'Chapter 1: Romance Dawn - Petualangan Dimulai', date: '1997' }
+                ]
+            },
+            {
+                id: 'solo-leveling',
+                title: 'Solo Leveling',
+                nativeTitle: '나 혼자만 레벨업',
+                cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXZMYykrQkZSdE-Ib0id2yg07cb-MJ2nLz1cITwMalLw&s=10',
+                banner: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGL0SkaFj8lnUglPIVyD-Azg7XUGr1Dlpig1I-xAV5Sw&s=10',
+                status: 'Tamat',
+                rating: 4.95,
+                author: 'Chugong',
+                illustrator: 'DUBU (REDICE Studio)',
+                publisher: 'D&C Media (KakaoPage)',
+                lastUpdate: 'Tamat (Complete)',
+                viewCount: '4.1M',
+                genres: ['Aksi', 'Fantasi', 'Petualangan', 'Drama'],
+                synopsis: 'Di dunia di mana hunter manusia harus melawan monster dari dungeon, Sung Jin-Woo adalah hunter tingkat E terlemah. Setelah terjebak dalam dungeon ganda yang mematikan, ia mendapatkan kemampuan misterius untuk "Level Up" tanpa batas.',
+                chapters: [
+                    { id: 200, title: 'Chapter 200: Epilog - Sang Shadow Monarch', date: 'Final' },
+                    { id: 179, title: 'Chapter 179: Pertempuran Penguasa Bayangan', date: '2021' },
+                    { id: 2, title: 'Chapter 2: Rahasia Sistem Level Up', date: '2018' },
+                    { id: 1, title: 'Chapter 1: Hunter Terlemah Manusia', date: '2018' }
+                ]
+            },
+            {
+                id: 'jujutsu-kaisen',
+                title: 'Jujutsu Kaisen',
+                nativeTitle: '呪術廻戦',
+                cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVtLWH5OTMN7Q8QaE3DkM9LSN-9AwCpI30P9BC-9aaBw&s=10',
+                banner: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGL0SkaFj8lnUglPIVyD-Azg7XUGr1Dlpig1I-xAV5Sw&s=10',
+                status: 'Ongoing',
+                rating: 4.8,
+                author: 'Gege Akutami',
+                illustrator: 'Gege Akutami',
+                publisher: 'Shueisha',
+                lastUpdate: '5 Jam yang lalu',
+                viewCount: '1.9M',
+                genres: ['Aksi', 'Fantasi', 'Mystery', 'Drama'],
+                synopsis: 'Yuji Itadori menelan jari terkutuk Raja Kutukan Ryomen Sukuna untuk menyelamatkan teman-temannya. Ia kemudian bergabung dengan SMA Jujutsu Tokyo di bawah bimbingan Satoru Gojo.',
+                chapters: [
+                    { id: 250, title: 'Chapter 250: Domain Expansion - Shinjuku Showdown', date: '22 Sep 2026' },
+                    { id: 249, title: 'Chapter 249: Jiwa Pertarungan Sukuna', date: '15 Sep 2026' },
+                    { id: 1, title: 'Chapter 1: Ryomen Sukuna Terbangun', date: '2018' }
+                ]
+            },
+            {
+                id: 'naruto',
+                title: 'Naruto Shippuden',
+                nativeTitle: 'NARUTO -ナルト-',
+                cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShN6K2-2xP2KxdUnvRoyo18TYxBJzApRwnYERheJUikw&s=10',
+                banner: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGL0SkaFj8lnUglPIVyD-Azg7XUGr1Dlpig1I-xAV5Sw&s=10',
+                status: 'Tamat',
+                rating: 4.88,
+                author: 'Masashi Kishimoto',
+                illustrator: 'Masashi Kishimoto',
+                publisher: 'Shueisha',
+                lastUpdate: 'Tamat (Complete)',
+                viewCount: '5.2M',
+                genres: ['Aksi', 'Petualangan', 'Fantasi', 'Drama'],
+                synopsis: 'Naruto Uzumaki, seorang ninja muda yang di dalamnya terkurung Kyuubi (Rubah Ekor Sembilan), berjuang demi diakui oleh penduduk desanya dan bertekad menjadi seorang Hokage.',
+                chapters: [
+                    { id: 700, title: 'Chapter 700: Uzumaki Naruto - Hokage Ke-7', date: '2014' },
+                    { id: 699, title: 'Chapter 699: Segel Rekonsiliasi Lembah Akhir', date: '2014' },
+                    { id: 1, title: 'Chapter 1: Uzumaki Naruto Hadir!', date: '1999' }
+                ]
+            },
+            {
+                id: 'chainsaw-man',
+                title: 'Chainsaw Man',
+                nativeTitle: 'チェンソーマン',
+                cover: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800&auto=format&fit=crop',
+                banner: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1200&auto=format&fit=crop',
+                status: 'Ongoing',
+                rating: 4.75,
+                author: 'Tatsuki Fujimoto',
+                illustrator: 'Tatsuki Fujimoto',
+                publisher: 'Shueisha (Shōnen Jump+)',
+                lastUpdate: '1 Hari yang lalu',
+                viewCount: '1.4M',
+                genres: ['Aksi', 'Sci-Fi', 'Mystery', 'Drama'],
+                synopsis: 'Denji hidup miskin dan bekerja sebagai pemburu iblis demi membayar hutang almarhum ayahnya bersama Pochita, Iblis Gergaji Mesin. Setelah dikhianati, Denji lahir kembali sebagai Chainsaw Man.',
+                chapters: [
+                    { id: 150, title: 'Chapter 150: Impian Seorang Pahlawan Gergaji', date: '20 Sep 2026' },
+                    { id: 149, title: 'Chapter 149: Keputusan Asa Mitaka', date: '13 Sep 2026' },
+                    { id: 1, title: 'Chapter 1: Dog & Chainsaw', date: '2018' }
+                ]
+            },
+            {
+                id: 'demon-slayer',
+                title: 'Demon Slayer (Kimetsu no Yaiba)',
+                nativeTitle: '鬼滅の刃',
+                cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop',
+                banner: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGL0SkaFj8lnUglPIVyD-Azg7XUGr1Dlpig1I-xAV5Sw&s=10',
+                status: 'Tamat',
+                rating: 4.9,
+                author: 'Koyoharu Gotouge',
+                illustrator: 'Koyoharu Gotouge',
+                publisher: 'Shueisha',
+                lastUpdate: 'Tamat (Complete)',
+                viewCount: '3.6M',
+                genres: ['Aksi', 'Fantasi', 'Drama'],
+                synopsis: 'Tanjiro Kamado bertekad menjadi pembasmi iblis setelah keluarganya dibantai oleh iblis dan adik perempuannya, Nezuko, diubah menjadi iblis namun masih memiliki emosi manusia.',
+                chapters: [
+                    { id: 205, title: 'Chapter 205: Kehidupan di Masa Depan yang Damai', date: '2020' },
+                    { id: 204, title: 'Chapter 204: Dunia Tanpa Iblis', date: '2020' },
+                    { id: 1, title: 'Chapter 1: Suka dan Duka Tanjiro', date: '2016' }
+                ]
+            },
+            {
+                id: 'spy-x-family',
+                title: 'Spy x Family',
+                nativeTitle: 'スパイファミリー',
+                cover: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTjemuDz3cnZVWzDE92tGD_FIHxfLJ1ynsEF0mzf3lcbQ&s=10',
+                banner: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop',
+                status: 'Ongoing',
+                rating: 4.82,
+                author: 'Tatsuya Endo',
+                illustrator: 'Tatsuya Endo',
+                publisher: 'Shueisha',
+                lastUpdate: '3 Hari yang lalu',
+                viewCount: '1.2M',
+                genres: ['Komedi', 'Aksi', 'Drama', 'Romantis'],
+                synopsis: 'Mata-mata handal bernama "Twilight" harus membuat keluarga palsu demi misi perdamaian. Tanpa disadari, istrinya adalah pembunuh bayaran dan anak angkatnya adalah telepatis penyuka kacang!',
+                chapters: [
+                    { id: 85, title: 'Chapter 85: Misi Keluarga Forger di Sekolah Eden', date: '18 Sep 2026' },
+                    { id: 84, title: 'Chapter 84: Operasi Strix Tahap Lanjut', date: '04 Sep 2026' },
+                    { id: 1, title: 'Chapter 1: Operasi Keluarga Palsu', date: '2019' }
+                ]
+            },
+            {
+                id: 'tower-of-god',
+                title: 'Tower of God',
+                nativeTitle: '신의 탑',
+                cover: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=800&auto=format&fit=crop',
+                banner: 'https://images.unsplash.com/photo-1531306728370-e2ebd9d7bb99?q=80&w=1200&auto=format&fit=crop',
+                status: 'Ongoing',
+                rating: 4.7,
+                author: 'SIU',
+                illustrator: 'SIU',
+                publisher: 'Naver Webtoon',
+                lastUpdate: 'Yesterday',
+                viewCount: '2.1M',
+                genres: ['Fantasi', 'Aksi', 'Petualangan', 'Mystery'],
+                synopsis: 'Apa yang kamu inginkan? Kekayaan? Kehormatan? Kekuasaan? Segala hal yang kamu impikan ada di puncak Menara. Bam mendaki menara demi mengejar Rachel, teman satu-satunya.',
+                chapters: [
+                    { id: 560, title: 'Chapter 560: Pertempuran Menara Lantai Ke-50', date: '21 Sep 2026' },
+                    { id: 559, title: 'Chapter 559: Kekuatan Rahasia Shinsu', date: '14 Sep 2026' },
+                    { id: 1, title: 'Chapter 1: Ujian Pertama Lantai 1', date: '2010' }
+                ]
+            }
+        ];
+
+        const GENRES_LIST = ['Semua', 'Aksi', 'Petualangan', 'Komedi', 'Fantasi', 'Romantis', 'Sci-Fi', 'Drama', 'Mystery'];
+
+        // App State Management
+        let appState = {
+            currentView: 'home', // 'home', 'detail', 'reader'
+            selectedComicId: null,
+            selectedChapterId: null,
+            activeGenre: 'Semua',
+            searchQuery: '',
+            filterTab: 'semua', // 'semua', 'populer', 'tamat', 'pustaka'
+            bookmarks: JSON.parse(localStorage.getItem('manga_orange_pustaka')) || ['one-piece', 'solo-leveling']
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderGenrePills();
+            renderAppView();
+        });
+
+        // Local Storage Helper
+        function toggleBookmark(comicId) {
+            const index = appState.bookmarks.indexOf(comicId);
+            if (index > -1) {
+                appState.bookmarks.splice(index, 1);
+                showToast('Komik dihapus dari Pustaka Saya', 'info');
+            } else {
+                appState.bookmarks.push(comicId);
+                showToast('Komik berhasil disimpan ke Pustaka!', 'success');
+            }
+            localStorage.setItem('manga_orange_pustaka', JSON.stringify(appState.bookmarks));
+            
+            // Re-render if on current view
+            if (appState.currentView === 'detail') {
+                renderDetailView();
+            } else if (appState.currentView === 'home') {
+                renderAppView();
+            }
+        }
+
+        function isBookmarked(comicId) {
+            return appState.bookmarks.includes(comicId);
+        }
+
+        // Navigation Controllers
+        function navigateTo(view, comicId = null, chapterId = null) {
+            appState.currentView = view;
+            if (comicId) appState.selectedComicId = comicId;
+            if (chapterId) appState.selectedChapterId = chapterId;
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderAppView();
+        }
+
+        function filterGenre(genre) {
+            appState.activeGenre = genre;
+            appState.searchQuery = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('mobileSearchInput').value = '';
+            renderGenrePills();
+            if (appState.currentView !== 'home') {
+                appState.currentView = 'home';
+            }
+            renderAppView();
+        }
+
+        function filterNav(tab) {
+            appState.filterTab = tab;
+            appState.activeGenre = 'Semua';
+            appState.searchQuery = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('mobileSearchInput').value = '';
+            renderGenrePills();
+            
+            // Update active state in navbar buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-brand-500', 'bg-brand-500/10');
+                btn.classList.add('text-slate-300');
+            });
+
+            if (appState.currentView !== 'home') {
+                appState.currentView = 'home';
+            }
+            renderAppView();
+        }
+
+        function handleSearch(query) {
+            appState.searchQuery = query.trim().toLowerCase();
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (clearBtn) {
+                if (query.length > 0) clearBtn.classList.remove('hidden');
+                else clearBtn.classList.add('hidden');
+            }
+
+            if (appState.currentView !== 'home') {
+                appState.currentView = 'home';
+            }
+            renderAppView();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('mobileSearchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            appState.searchQuery = '';
+            renderAppView();
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        function toggleMobileSearch() {
+            const bar = document.getElementById('mobileSearchBar');
+            bar.classList.toggle('hidden');
+        }
+
+        // Render Genre Pills Component
+        function renderGenrePills() {
+            const container = document.getElementById('genreContainer');
+            if (!container) return;
+
+            container.innerHTML = GENRES_LIST.map(genre => {
+                const isActive = appState.activeGenre === genre;
+                return `
+                    <button onclick="filterGenre('${genre}')" 
+                        class="px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border ${
+                            isActive 
+                            ? 'bg-brand-500 text-white border-brand-500 shadow-lg shadow-brand-500/30' 
+                            : 'bg-darkcard text-slate-300 border-darkborder hover:border-brand-500/50 hover:text-brand-500'
+                        }">
+                        ${genre === 'Semua' ? '<i class="fa-solid fa-layer-group mr-1.5"></i>' : ''} ${genre}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderAppView() {
+            const main = document.getElementById('appContent');
+            const genreBarSection = document.getElementById('genreBarSection');
+
+            // Hide genre bar in reader view for maximum immersion
+            if (appState.currentView === 'reader') {
+                genreBarSection.classList.add('hidden');
+            } else {
+                genreBarSection.classList.remove('hidden');
+            }
+
+            switch(appState.currentView) {
+                case 'home':
+                    renderHomeView(main);
+                    break;
+                case 'detail':
+                    renderDetailView(main);
+                    break;
+                case 'reader':
+                    renderReaderView(main);
+                    break;
+                default:
+                    renderHomeView(main);
+            }
+        }
+
+        function renderHomeView(container) {
+            let filteredComics = MOCK_COMICS;
+
+            // Apply Genre Filter
+            if (appState.activeGenre !== 'Semua') {
+                filteredComics = filteredComics.filter(c => c.genres.includes(appState.activeGenre));
+            }
+
+            // Apply Tab Nav Filter
+            if (appState.filterTab === 'populer') {
+                filteredComics = filteredComics.filter(c => parseFloat(c.rating) >= 4.8);
+            } else if (appState.filterTab === 'tamat') {
+                filteredComics = filteredComics.filter(c => c.status === 'Tamat');
+            } else if (appState.filterTab === 'pustaka') {
+                filteredComics = filteredComics.filter(c => appState.bookmarks.includes(c.id));
+            }
+
+            // Apply Search Query Filter
+            if (appState.searchQuery !== '') {
+                filteredComics = filteredComics.filter(c => 
+                    c.title.toLowerCase().includes(appState.searchQuery) ||
+                    c.author.toLowerCase().includes(appState.searchQuery) ||
+                    c.genres.some(g => g.toLowerCase().includes(appState.searchQuery))
+                );
+            }
+
+            const heroComic = MOCK_COMICS[0]; // Hero feature: One Piece
+
+            let html = '';
+
+            // Render Hero Highlight Banner (Only show if not filtering heavily)
+            if (appState.activeGenre === 'Semua' && appState.filterTab === 'semua' && appState.searchQuery === '') {
+                html += `
+                <!-- Hero Banner Highlight -->
+                <div class="relative rounded-2xl overflow-hidden mb-10 border border-darkborder shadow-2xl group">
+                    <div class="absolute inset-0 bg-gradient-to-t from-darkbg via-darkbg/70 to-transparent z-10"></div>
+                    <img src="${heroComic.banner}" alt="${heroComic.title}" class="w-full h-80 sm:h-96 object-cover object-center group-hover:scale-105 transition-transform duration-700">
+                    
+                    <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-8 z-20 flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
+                        <div class="max-w-2xl">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="bg-brand-500 text-white text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <i class="fa-solid fa-fire text-amber-200"></i> Highlighting Hot
+                                </span>
+                                <span class="bg-darkcard/80 backdrop-blur-md text-slate-300 text-xs px-2.5 py-1 rounded-full border border-darkborder">
+                                    ${heroComic.status}
+                                </span>
+                            </div>
+                            <h1 class="text-3xl sm:text-5xl font-black text-white font-comic tracking-wide mb-2">
+                                ${heroComic.title}
+                            </h1>
+                            <p class="text-slate-300 text-sm line-clamp-2 mb-4 leading-relaxed">
+                                ${heroComic.synopsis}
+                            </p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                ${heroComic.genres.map(g => `<span class="bg-darkbg/60 text-brand-500 text-xs px-2.5 py-1 rounded-md border border-brand-500/30">${g}</span>`).join('')}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 w-full md:w-auto">
+                            <button onclick="navigateTo('detail', '${heroComic.id}')" class="flex-1 md:flex-none px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2 transition-all">
+                                <i class="fa-solid fa-book-open"></i> Baca Sekarang
+                            </button>
+                            <button onclick="toggleBookmark('${heroComic.id}')" class="p-3 bg-darkcard/80 hover:bg-darkcard border border-darkborder rounded-xl text-slate-200 hover:text-brand-500 transition">
+                                <i class="fa-${isBookmarked(heroComic.id) ? 'solid text-brand-500' : 'regular'} fa-bookmark text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+
+            // Section Header
+            let sectionTitle = 'Rilisan Terbaru & Komik Populer';
+            if (appState.filterTab === 'pustaka') sectionTitle = 'Pustaka Saya (Komik Favorit)';
+            else if (appState.filterTab === 'populer') sectionTitle = 'Daftar Komik Populer & Trending';
+            else if (appState.filterTab === 'tamat') sectionTitle = 'Koleksi Komik Tamat (Completed)';
+            if (appState.activeGenre !== 'Semua') sectionTitle = `Komik Genre: ${appState.activeGenre}`;
+            if (appState.searchQuery !== '') sectionTitle = `Hasil Pencarian: "${appState.searchQuery}"`;
+
+            html += `
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                        <span class="w-2 h-7 bg-brand-500 rounded-full inline-block"></span>
+                        ${sectionTitle}
+                    </h2>
+                    <span class="text-xs text-slate-400 font-medium">${filteredComics.length} Komik Ditemukan</span>
+                </div>
+            `;
+
+            // Grid Cards Rendering
+            if (filteredComics.length === 0) {
+                html += `
+                    <div class="text-center py-16 bg-darkcard/30 rounded-2xl border border-darkborder">
+                        <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400 text-2xl">
+                            <i class="fa-solid fa-ghost"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-200">Komik Tidak Ditemukan</h3>
+                        <p class="text-slate-400 text-sm mt-1">Coba cari dengan kata kunci lain atau ubah filter genre.</p>
+                        <button onclick="filterGenre('Semua')" class="mt-4 px-4 py-2 bg-brand-500 text-white rounded-lg text-xs font-bold hover:bg-brand-600 transition">
+                            Reset Filter
+                        </button>
+                    </div>
+                `;
+            } else {
+                html += `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">`;
+                
+                filteredComics.forEach(comic => {
+                    const latestChapter = comic.chapters[0];
+                    html += `
+                        <div class="comic-card bg-darkcard rounded-xl overflow-hidden border border-darkborder flex flex-col justify-between group cursor-pointer" onclick="navigateTo('detail', '${comic.id}')">
+                            <div class="relative overflow-hidden aspect-[3/4]">
+                                <img src="${comic.cover}" alt="${comic.title}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                
+                                <div class="absolute top-2 left-2 flex flex-col gap-1">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold text-white bg-slate-900/80 backdrop-blur border border-white/10">
+                                        <i class="fa-solid fa-star text-amber-400"></i> ${comic.rating}
+                                    </span>
+                                </div>
+
+                                <div class="absolute top-2 right-2">
+                                    <button onclick="event.stopPropagation(); toggleBookmark('${comic.id}')" 
+                                        class="w-7 h-7 rounded-full bg-slate-900/80 backdrop-blur text-slate-300 hover:text-brand-500 flex items-center justify-center transition">
+                                        <i class="fa-${isBookmarked(comic.id) ? 'solid text-brand-500' : 'regular'} fa-bookmark text-xs"></i>
+                                    </button>
+                                </div>
+
+                                <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${comic.status === 'Tamat' ? 'bg-emerald-600' : 'bg-brand-500'} text-white shadow">
+                                        ${latestChapter ? 'Ch. ' + latestChapter.id : comic.status}
+                                    </span>
+                                    <span class="text-[10px] text-slate-300 bg-black/60 px-1.5 py-0.5 rounded backdrop-blur">
+                                        ${comic.lastUpdate}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="p-3 flex flex-col flex-grow justify-between">
+                                <div>
+                                    <h3 class="font-bold text-sm text-slate-100 group-hover:text-brand-500 transition line-clamp-1 mb-1">
+                                        ${comic.title}
+                                    </h3>
+                                    <div class="text-[11px] text-slate-400 line-clamp-1 mb-2">
+                                        ${comic.genres.join(', ')}
+                                    </div>
+                                </div>
+                                <div class="pt-2 border-t border-darkborder/60 flex items-center justify-between text-[11px] text-slate-400">
+                                    <span><i class="fa-regular fa-eye mr-1"></i>${comic.viewCount}</span>
+                                    <span class="text-brand-500 font-semibold group-hover:translate-x-1 transition-transform">Baca <i class="fa-solid fa-chevron-right text-[9px]"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderDetailView(container) {
+            const comic = MOCK_COMICS.find(c => c.id === appState.selectedComicId) || MOCK_COMICS[0];
+            const bookmarked = isBookmarked(comic.id);
+
+            container.innerHTML = `
+                <!-- Back Navigation Bar -->
+                <div class="mb-6">
+                    <button onclick="navigateTo('home')" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-darkcard border border-darkborder text-slate-300 hover:text-brand-500 hover:border-brand-500/40 text-sm transition font-medium">
+                        <i class="fa-solid fa-arrow-left"></i> Kembali ke Beranda
+                    </button>
+                </div>
+
+                <!-- Detail Header Card -->
+                <div class="bg-darkcard rounded-2xl border border-darkborder overflow-hidden p-6 sm:p-8 mb-8 shadow-xl">
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <!-- Comic Cover -->
+                        <div class="w-full md:w-64 flex-shrink-0 relative group">
+                            <img src="${comic.cover}" alt="${comic.title}" class="w-full h-80 sm:h-96 object-cover rounded-xl shadow-2xl border border-darkborder">
+                            <span class="absolute top-3 left-3 bg-brand-500 text-white font-bold text-xs px-3 py-1 rounded-full shadow">
+                                ${comic.status}
+                            </span>
+                        </div>
+
+                        <!-- Info & Metadata -->
+                        <div class="flex-grow space-y-4 w-full">
+                            <div>
+                                <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+                                    <h1 class="text-3xl sm:text-4xl font-black text-white tracking-wide font-comic">${comic.title}</h1>
+                                    <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-3 py-1 rounded-full text-sm font-bold">
+                                        <i class="fa-solid fa-star"></i> ${comic.rating} / 5.0
+                                    </div>
+                                </div>
+                                <p class="text-slate-400 text-sm italic">${comic.nativeTitle}</p>
+                            </div>
+
+                            <!-- Genre Badges -->
+                            <div class="flex flex-wrap gap-2 pt-1">
+                                ${comic.genres.map(g => `<span class="bg-brand-500/10 text-brand-500 border border-brand-500/30 text-xs font-semibold px-3 py-1 rounded-lg">${g}</span>`).join('')}
+                            </div>
+
+                            <!-- Spec Metadata Table Grid -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 py-4 border-y border-darkborder/80 text-sm">
+                                <div>
+                                    <span class="text-slate-400 text-xs block mb-0.5">Penulis (Author)</span>
+                                    <span class="text-slate-200 font-semibold">${comic.author}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-xs block mb-0.5">Ilustrator</span>
+                                    <span class="text-slate-200 font-semibold">${comic.illustrator}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-xs block mb-0.5">Penerbit</span>
+                                    <span class="text-slate-200 font-semibold">${comic.publisher}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-xs block mb-0.5">Update Terakhir</span>
+                                    <span class="text-slate-200 font-semibold text-brand-500">${comic.lastUpdate}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-xs block mb-0.5">Total Pembaca</span>
+                                    <span class="text-slate-200 font-semibold">${comic.viewCount} Views</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 text-xs block mb-0.5">Jumlah Chapter</span>
+                                    <span class="text-slate-200 font-semibold">${comic.chapters.length} Chapter</span>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex flex-wrap gap-4 pt-2">
+                                <button onclick="navigateTo('reader', '${comic.id}', ${comic.chapters[comic.chapters.length - 1].id})" class="flex-1 sm:flex-none px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2 transition">
+                                    <i class="fa-solid fa-play"></i> Baca Chapter Pertama
+                                </button>
+                                <button onclick="toggleBookmark('${comic.id}')" class="px-5 py-3 ${bookmarked ? 'bg-amber-500/20 border-amber-500 text-amber-400' : 'bg-darkbg border-darkborder text-slate-300 hover:text-brand-500'} border rounded-xl font-bold text-sm flex items-center gap-2 transition">
+                                    <i class="fa-${bookmarked ? 'solid' : 'regular'} fa-bookmark"></i> ${bookmarked ? 'Tersimpan di Pustaka' : 'Tambah ke Pustaka'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Synopsis Box -->
+                    <div class="mt-8 pt-6 border-t border-darkborder">
+                        <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-align-left text-brand-500"></i> Sinopsis Komik
+                        </h3>
+                        <p class="text-slate-300 text-sm leading-relaxed">${comic.synopsis}</p>
+                    </div>
+                </div>
+
+                <!-- Chapter List Section -->
+                <div class="bg-darkcard rounded-2xl border border-darkborder p-6 sm:p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-list-ul text-brand-500"></i> Daftar Chapter (${comic.chapters.length})
+                        </h3>
+                        <span class="text-xs text-slate-400">Klik chapter untuk langsung membaca</span>
+                    </div>
+
+                    <div class="space-y-2">
+                        ${comic.chapters.map(ch => `
+                            <div onclick="navigateTo('reader', '${comic.id}', ${ch.id})" 
+                                class="p-4 rounded-xl bg-darkbg hover:bg-brand-500/10 border border-darkborder hover:border-brand-500/40 flex items-center justify-between cursor-pointer transition group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-lg bg-darkcard group-hover:bg-brand-500 text-slate-300 group-hover:text-white flex items-center justify-center text-xs font-bold transition">
+                                        <i class="fa-solid fa-book-open"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-sm text-slate-200 group-hover:text-brand-500 transition">${ch.title}</div>
+                                        <div class="text-[11px] text-slate-400">Diunggah: ${ch.date}</div>
+                                    </div>
+                                </div>
+                                <div class="text-xs font-semibold text-brand-500 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                    Baca <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderReaderView(container) {
+            const comic = MOCK_COMICS.find(c => c.id === appState.selectedComicId) || MOCK_COMICS[0];
+            const currentChapterId = appState.selectedChapterId || comic.chapters[0].id;
+            const currentChapter = comic.chapters.find(ch => ch.id == currentChapterId) || comic.chapters[0];
+
+            // Calculate Prev and Next Chapters
+            const currentIndex = comic.chapters.findIndex(ch => ch.id == currentChapterId);
+            const prevChapter = comic.chapters[currentIndex + 1]; // Older chapter
+            const nextChapter = comic.chapters[currentIndex - 1]; // Newer chapter
+
+            container.innerHTML = `
+                <!-- Reader Top Toolbar -->
+                <div class="sticky top-20 z-40 bg-darkcard/95 backdrop-blur border border-darkborder rounded-2xl p-4 mb-6 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+                        <button onclick="navigateTo('detail', '${comic.id}')" class="px-3.5 py-2 rounded-xl bg-darkbg hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-darkborder transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-arrow-left"></i> Detail
+                        </button>
+                        <div class="text-slate-200 font-bold text-sm truncate max-w-[200px] sm:max-w-xs">
+                            ${comic.title}
+                        </div>
+                    </div>
+
+                    <!-- Chapter Switcher Dropdown & Nav Buttons -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
+                        <button ${prevChapter ? `onclick="navigateTo('reader', '${comic.id}', ${prevChapter.id})"` : 'disabled'} 
+                            class="px-3 py-2 rounded-lg bg-darkbg border border-darkborder text-xs font-semibold ${prevChapter ? 'text-slate-200 hover:text-brand-500 hover:border-brand-500' : 'text-slate-600 cursor-not-allowed'} transition">
+                            <i class="fa-solid fa-chevron-left mr-1"></i> Prev
+                        </button>
+
+                        <select onchange="navigateTo('reader', '${comic.id}', this.value)" class="bg-darkbg text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-darkborder focus:outline-none focus:border-brand-500">
+                            ${comic.chapters.map(ch => `
+                                <option value="${ch.id}" ${ch.id == currentChapterId ? 'selected' : ''}>${ch.title}</option>
+                            `).join('')}
+                        </select>
+
+                        <button ${nextChapter ? `onclick="navigateTo('reader', '${comic.id}', ${nextChapter.id})"` : 'disabled'} 
+                            class="px-3 py-2 rounded-lg bg-darkbg border border-darkborder text-xs font-semibold ${nextChapter ? 'text-slate-200 hover:text-brand-500 hover:border-brand-500' : 'text-slate-600 cursor-not-allowed'} transition">
+                            Next <i class="fa-solid fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Webtoon Comic Canvas Scroll View -->
+                <div class="max-w-3xl mx-auto bg-black rounded-2xl overflow-hidden border border-darkborder shadow-2xl space-y-2 p-2 sm:p-4">
+                    
+                    <!-- Title Panel -->
+                    <div class="bg-gradient-to-b from-darkcard to-slate-900 p-8 text-center rounded-xl border border-darkborder/50 my-2">
+                        <span class="text-brand-500 text-xs font-extrabold uppercase tracking-widest block mb-1">MangaOrange Digital Reader</span>
+                        <h1 class="text-2xl sm:text-4xl font-black text-white font-comic tracking-wide mb-2">${comic.title}</h1>
+                        <p class="text-slate-300 font-bold text-sm bg-brand-500/20 border border-brand-500/30 inline-block px-4 py-1.5 rounded-full">${currentChapter.title}</p>
+                    </div>
+
+                    <!-- Panel 1: Dynamic Simulated Webtoon Page -->
+                    <div class="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900 group">
+                        <img src="${comic.banner}" alt="Comic Panel 1" class="w-full h-[450px] object-cover object-center">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30"></div>
+                        <div class="absolute top-6 left-6 max-w-xs speech-bubble p-4 shadow-2xl">
+                            <p class="text-xs font-bold text-slate-900 leading-snug">
+                                "Perjalanan sejauh ribuan mil di lautan ini selalu dimulai dari satu keberanian!"
+                            </p>
+                        </div>
+                        <div class="absolute bottom-6 right-6 font-comic text-5xl font-black text-brand-500 tracking-widest drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] animate-pulse">
+                            BOOOOM!!!
+                        </div>
+                    </div>
+
+                    <!-- Panel 2: Character Focus -->
+                    <div class="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900">
+                        <img src="${comic.cover}" alt="Comic Panel 2" class="w-full h-[500px] object-cover object-top">
+                        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-black"></div>
+                        <div class="absolute bottom-10 left-6 right-6">
+                            <div class="bg-black/80 backdrop-blur border border-brand-500/40 p-4 rounded-xl text-center">
+                                <span class="text-brand-400 font-bold text-xs uppercase block mb-1">Adegan Utama</span>
+                                <p class="text-slate-200 text-sm italic">
+                                    "Aku tidak akan pernah mundur dari impianku, apapun rintangan di depan!"
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel 3: Action & Dialogue FX Page -->
+                    <div class="bg-slate-950 p-6 sm:p-10 rounded-xl border border-slate-800 text-center space-y-6">
+                        <div class="inline-block p-4 bg-brand-500/10 rounded-2xl border border-brand-500/30">
+                            <i class="fa-solid fa-bolt-lightning text-4xl text-brand-500 mb-2"></i>
+                            <h3 class="font-comic text-2xl text-white tracking-wider">KLIMAKS CHAPTER</h3>
+                        </div>
+                        <p class="text-slate-300 text-sm max-w-md mx-auto leading-relaxed">
+                            Kekuatan misterius mulai bangkit! Seluruh musuh terkejut melihat aura yang terpancar dari dalam dirinya.
+                        </p>
+                        <div class="py-4 flex justify-center gap-4">
+                            <span class="font-comic text-3xl text-amber-400 -rotate-6">SWOOSH!!</span>
+                            <span class="font-comic text-3xl text-brand-500 rotate-6">CRASH!!</span>
+                        </div>
+                    </div>
+
+                    <!-- End of Chapter Footer Banner -->
+                    <div class="bg-darkcard p-8 rounded-xl border border-darkborder text-center space-y-4">
+                        <div class="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-xl">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-lg">Kamu Telah Selesai Membaca</h3>
+                            <p class="text-slate-400 text-xs mt-0.5">${currentChapter.title}</p>
+                        </div>
+                        <div class="flex items-center justify-center gap-3 pt-2">
+                            <button ${prevChapter ? `onclick="navigateTo('reader', '${comic.id}', ${prevChapter.id})"` : 'disabled'} 
+                                class="px-4 py-2.5 rounded-xl bg-darkbg border border-darkborder text-xs font-bold text-slate-300 hover:text-white transition">
+                                <i class="fa-solid fa-arrow-left mr-1"></i> Prev Chapter
+                            </button>
+                            <button ${nextChapter ? `onclick="navigateTo('reader', '${comic.id}', ${nextChapter.id})"` : 'disabled'} 
+                                class="px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lg shadow-brand-500/30 transition">
+                                Next Chapter <i class="fa-solid fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            `;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.innerText = message;
+            if (type === 'info') {
+                toastIcon.className = 'fa-solid fa-circle-info text-sky-400 text-lg';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-check text-brand-500 text-lg';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
